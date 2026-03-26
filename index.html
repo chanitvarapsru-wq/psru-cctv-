@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PSRU CCTV Monitor</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Saira+Condensed:wght@400;600;700&family=Barlow:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#07090f;--surf:#0c1018;--panel:#101620;--bdr:#182030;--bdr2:#1e2d42;
+  --hik:#00d4ff;--dah:#ff9933;--ok:#00e87a;--err:#ff3c50;--warn:#ffcc00;
+  --text:#b8ccd8;--dim:#3a5060;--white:#e8f2ff;
+  --mono:'Share Tech Mono',monospace;--head:'Barlow',sans-serif;--cond:'Saira Condensed',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);font-family:var(--head);color:var(--text);min-height:100vh}
+body::after{content:'';position:fixed;inset:0;background-image:radial-gradient(circle at 1px 1px,rgba(0,212,255,.03) 1px,transparent 0);background-size:30px 30px;pointer-events:none;z-index:0}
+
+/* TOPBAR */
+.topbar{position:sticky;top:0;z-index:200;display:flex;align-items:center;height:50px;padding:0 14px;gap:12px;background:rgba(10,14,22,.97);border-bottom:1px solid var(--bdr2)}
+.brand{display:flex;align-items:center;gap:9px}
+.brand-hex{width:32px;height:32px;background:linear-gradient(135deg,var(--hik),#0095b8);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;flex-shrink:0}
+.brand-name{font-family:var(--cond);font-size:18px;font-weight:700;letter-spacing:2px;color:var(--white)}
+.brand-sub{font-family:var(--mono);font-size:9px;color:var(--hik);letter-spacing:1.5px}
+.srv-chip{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;color:var(--hik)}
+.srv-dot{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 5px var(--ok);animation:blink 2s step-end infinite}
+.srv-dot.off{background:var(--err);box-shadow:0 0 5px var(--err)}
+@keyframes blink{50%{opacity:.3}}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.pill{display:flex;align-items:center;gap:4px;padding:3px 9px;background:var(--surf);border:1px solid var(--bdr2);border-radius:3px;font-family:var(--mono);font-size:10px}
+.pdot{width:6px;height:6px;border-radius:50%}
+.p-ok{background:var(--ok);box-shadow:0 0 4px var(--ok)}
+.p-err{background:var(--err);box-shadow:0 0 4px var(--err)}
+.p-ld{background:var(--warn);box-shadow:0 0 4px var(--warn);animation:blink .6s step-end infinite}
+#clock{font-family:var(--mono);font-size:14px;color:var(--ok);letter-spacing:2px}
+
+/* TOOLBAR */
+.toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:7px 14px;background:rgba(10,14,22,.95);border-bottom:1px solid var(--bdr);position:sticky;top:50px;z-index:190}
+.lbl{font-family:var(--mono);font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim)}
+.btn{font-family:var(--cond);font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;padding:4px 10px;background:var(--surf);border:1px solid var(--bdr2);color:var(--text);cursor:pointer;border-radius:3px;transition:all .18s}
+.btn:hover{border-color:var(--hik);color:var(--hik)}
+.btn.active{border-color:var(--ok);color:var(--ok);background:rgba(0,232,122,.08)}
+.gbtn{width:28px;height:26px;background:var(--surf);border:1px solid var(--bdr2);color:var(--dim);cursor:pointer;border-radius:3px;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all .18s}
+.gbtn:hover,.gbtn.active{border-color:var(--hik);color:var(--hik);background:rgba(0,212,255,.08)}
+.sep{width:1px;height:24px;background:var(--bdr2)}
+.sl-wrap{display:flex;align-items:center;gap:6px}
+input[type=range]{-webkit-appearance:none;width:80px;height:3px;background:var(--bdr2);border-radius:2px;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;background:var(--hik);border-radius:50%;cursor:pointer}
+#ivv{font-family:var(--mono);font-size:10px;color:var(--hik);min-width:28px}
+
+/* MAIN */
+.main{padding:12px 14px 56px;position:relative;z-index:1}
+
+/* DEVICE GROUP */
+.dg{margin-bottom:20px}
+.dg-hdr{display:flex;align-items:center;gap:9px;margin-bottom:9px;padding-bottom:7px;border-bottom:1px solid var(--bdr)}
+.dbadge{font-family:var(--cond);font-size:10px;font-weight:700;letter-spacing:2px;padding:2px 8px;border-radius:2px}
+.dbadge.hikvision{background:rgba(0,212,255,.1);border:1px solid var(--hik);color:var(--hik)}
+.dbadge.dahua{background:rgba(255,153,51,.1);border:1px solid var(--dah);color:var(--dah)}
+.dn{font-family:var(--cond);font-size:16px;font-weight:700;color:var(--white)}
+.dsn{font-family:var(--mono);font-size:9px;color:var(--dim)}
+.dconn{margin-left:auto;display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px}
+.dpbtn{font-family:var(--mono);font-size:9px;padding:2px 7px;background:transparent;border:1px solid var(--bdr2);color:var(--dim);cursor:pointer;border-radius:2px;transition:all .18s}
+.dpbtn:hover{border-color:var(--hik);color:var(--hik)}
+
+/* CAM GRID */
+.cam-grid{display:grid;gap:6px}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+.g5{grid-template-columns:repeat(5,1fr)}
+
+/* CAM CARD */
+.cc{background:var(--panel);border:1px solid var(--bdr);border-radius:3px;overflow:hidden;position:relative;cursor:pointer;transition:border-color .2s,box-shadow .2s;animation:fi .4s ease both}
+.cc:hover{border-color:rgba(0,212,255,.5);box-shadow:0 0 12px rgba(0,212,255,.1)}
+.cc.ok{border-color:rgba(0,232,122,.15)}
+.cc.err{border-color:rgba(255,60,80,.3)}
+@keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.ciw{position:relative;width:100%;aspect-ratio:16/9;background:#040608;overflow:hidden}
+.cimg{width:100%;height:100%;object-fit:cover;display:block}
+.cspin{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(4,6,8,.88);z-index:5}
+.sr{width:26px;height:26px;border:2px solid var(--bdr2);border-top-color:var(--hik);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.cel{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:rgba(4,6,8,.9);z-index:6}
+.cc.err .cel{display:flex}
+.cei{font-size:22px}
+.cet{font-family:var(--mono);font-size:9px;color:var(--err);text-align:center;padding:0 8px;line-height:1.4}
+.cer{font-family:var(--mono);font-size:8px;color:var(--dim)}
+.clive{position:absolute;top:4px;right:4px;z-index:7;display:flex;align-items:center;gap:3px;background:rgba(255,60,80,.85);font-family:var(--mono);font-size:7px;color:#fff;padding:1px 4px;border-radius:2px;letter-spacing:1px}
+.cld{width:4px;height:4px;border-radius:50%;background:#fff;animation:blink .8s step-end infinite}
+.cprg{position:absolute;bottom:0;left:0;height:2px;background:linear-gradient(90deg,var(--hik),var(--ok));transition:width linear;z-index:8;opacity:.65}
+.cptag{position:absolute;top:4px;left:4px;z-index:7;font-family:var(--mono);font-size:7px;padding:1px 4px;border-radius:2px;letter-spacing:1px}
+.cptag.hik{background:rgba(0,212,255,.15);border:1px solid rgba(0,212,255,.3);color:var(--hik)}
+.cptag.dah{background:rgba(255,153,51,.15);border:1px solid rgba(255,153,51,.3);color:var(--dah)}
+.cinfo{padding:4px 8px;display:flex;align-items:center;justify-content:space-between;background:rgba(7,9,15,.95);border-top:1px solid var(--bdr)}
+.cid{font-family:var(--cond);font-size:12px;font-weight:700;letter-spacing:1px;color:var(--white)}
+.cnm{font-family:var(--head);font-size:9px;color:var(--dim);line-height:1;margin-top:1px}
+.cmeta{display:flex;align-items:center;gap:5px}
+.cts{font-family:var(--mono);font-size:8px;color:var(--dim)}
+
+/* MODAL */
+.mov{position:fixed;inset:0;background:rgba(0,0,0,.94);z-index:999;display:none;align-items:center;justify-content:center}
+.mov.open{display:flex}
+.modal{background:var(--panel);border:1px solid rgba(0,212,255,.4);border-radius:4px;width:min(93vw,1000px);overflow:hidden;animation:mi .2s ease}
+@keyframes mi{from{transform:scale(.96);opacity:0}to{transform:scale(1);opacity:1}}
+.mhdr{display:flex;align-items:center;justify-content:space-between;padding:9px 13px;background:rgba(0,212,255,.05);border-bottom:1px solid var(--bdr2)}
+.mtitle{font-family:var(--cond);font-size:15px;font-weight:700;letter-spacing:2px;color:var(--hik)}
+.mcls{width:24px;height:24px;background:none;border:1px solid var(--bdr2);color:var(--text);cursor:pointer;border-radius:2px;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .18s}
+.mcls:hover{border-color:var(--err);color:var(--err)}
+.mbody{padding:10px}
+.mbody img{width:100%;border-radius:3px;display:block}
+.mfoot{padding:7px 13px;border-top:1px solid var(--bdr);display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--dim)}
+
+/* STATUS BAR */
+.sbar{position:fixed;bottom:0;left:0;right:0;height:22px;background:rgba(10,14,22,.97);border-top:1px solid var(--bdr);display:flex;align-items:center;padding:0 14px;gap:16px;font-family:var(--mono);font-size:9px;color:var(--dim);z-index:200}
+.si{display:flex;align-items:center;gap:4px}
+.si span{color:var(--text)}
+#sblog{margin-left:auto;color:var(--ok)}
+
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:3px}
+@media(max-width:600px){.g4,.g5{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(2,1fr)}.brand-sub{display:none}}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-hex">▶</div>
+    <div>
+      <div class="brand-name">PSRU CCTV</div>
+      <div class="brand-sub">MONITOR v3</div>
+    </div>
+  </div>
+  <div class="srv-chip">
+    <div class="srv-dot off" id="srvDot"></div>
+    <span id="srvLabel">กำลังเชื่อมต่อ...</span>
+  </div>
+  <div class="topbar-right">
+    <div class="pill"><div class="pdot p-ok"></div><span id="cOn">0</span> Online</div>
+    <div class="pill"><div class="pdot p-err"></div><span id="cErr">0</span> Error</div>
+    <div id="clock">--:--:--</div>
+  </div>
+</header>
+
+<div class="toolbar">
+  <span class="lbl">Layout</span>
+  <div style="display:flex;gap:3px">
+    <button class="gbtn" data-g="2" onclick="setGrid(2)">▦</button>
+    <button class="gbtn active" data-g="4" onclick="setGrid(4)">▦▦</button>
+    <button class="gbtn" data-g="5" onclick="setGrid(5)">▦▦▦</button>
+  </div>
+  <div class="sep"></div>
+  <span class="lbl">รีเฟรชทุก</span>
+  <div class="sl-wrap">
+    <input type="range" id="ivSlider" min="10" max="120" value="15" oninput="setIv(this.value)">
+    <span id="ivv">15s</span>
+  </div>
+  <div class="sep"></div>
+  <button class="btn" id="pauseBtn" onclick="togglePause()">⏸ Pause</button>
+  <button class="btn" onclick="refreshAll()">↺ Refresh All</button>
+</div>
+
+<main class="main" id="main"></main>
+
+<div class="mov" id="mov" onclick="if(event.target===this)closeFull()">
+  <div class="modal">
+    <div class="mhdr">
+      <span class="mtitle" id="mtitle">—</span>
+      <button class="mcls" onclick="closeFull()">✕</button>
+    </div>
+    <div class="mbody"><img id="mimg" src="" alt=""></div>
+    <div class="mfoot"><span id="mmeta">—</span><span id="mts">—</span></div>
+  </div>
+</div>
+
+<div class="sbar">
+  <div class="si">Devices: <span id="sbDevices">0</span></div>
+  <div class="si">Cameras: <span id="sbCams">0</span></div>
+  <div class="si">Interval: <span id="sbi">15s</span></div>
+  <span id="sblog">● กำลังเริ่มต้น...</span>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+//  ★ แก้ตรงนี้เท่านั้น ★
+// ═══════════════════════════════════════════════════
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwjta4LK4v-eowhEFz8PtPHKrz_dbPiVIVWkgxUsc_DJDYaqEFi_quAGnErMirgDcvawA/exec';
+// ═══════════════════════════════════════════════════
+
+const LABELS = {
+  psru1:{1:'F01C01 หน้าอาคาร',2:'F01C02 ทางเข้า',3:'F01C03 ล็อบบี้',4:'F01C04 สำนักงาน',5:'F01C05 ชั้น1',6:'F01C06 ร้านค้า',7:'F01C07 ลิฟต์',8:'F01C08 ทางเดิน',9:'F02C01 ห้องประชุม',10:'F02C02 ชั้น2',11:'F02C03 บันได',12:'F03C01 ทางเดิน',13:'F03C02 ลิฟต์',14:'F03C03 ฉุกเฉิน',15:'F04C01 ชั้น4',16:'F04C02 ชั้น4ซ้าย'},
+  psru2:{1:'RGate01 ประตูหลัก',2:'R3Way01 สามแยก',3:'RGate2 ทิศเหนือ',4:'IP PTZ ลานจอด',5:'IP PTZ สนาม',6:'Court R3 บาสฯ',7:'ประตูวิทยาลัย',8:'RGate4 ประตูหลัง',9:'Wit Ca วิทยาการ',10:'R3Way ห้องสมุด',11:'Bangkok Bank',12:'ol2 R3 จุดตรวจ'},
+  psru3:{1:'Gate-A',2:'Gate-B',3:'Gate-C',4:'Gate-D',5:'Parking-1',6:'Parking-2',7:'Corridor',8:'Lobby'}
+};
+
+let interval=15, cols=4, paused=false, timers={}, camSt={}, devices=[];
+
+async function checkServer(){
+  try{
+    const r=await fetch(`${APPS_SCRIPT_URL}?action=status`);
+    const d=await r.json();
+    if(d.ok){ setSrv(true,`Apps Script OK — ${d.devices} devices`); return true; }
+    throw new Error(d.error);
+  }catch(e){ setSrv(false,'ไม่สามารถเชื่อมต่อ VPS'); log(`✗ ${e.message}`); return false; }
+}
+
+function setSrv(ok,msg){
+  g('srvDot').className='srv-dot'+(ok?'':' off');
+  g('srvLabel').textContent=msg;
+}
+
+async function loadDevices(){
+  try{
+    const r=await fetch(`${APPS_SCRIPT_URL}?action=devices`);
+    const d=await r.json();
+    devices=d.devices||[];
+  }catch{
+    devices=[
+      {id:'psru1',label:'Hikvision — อาคาร F',brand:'hikvision',channels:16,mode:'p2p',sn:'-'},
+      {id:'psru2',label:'Dahua — ภายนอก',brand:'dahua',channels:12,mode:'p2p',sn:'-'},
+      {id:'psru3',label:'Dahua — ประตู PSRU',brand:'dahua',channels:8,mode:'p2p',sn:'-'},
+    ];
+  }
+  g('sbDevices').textContent=devices.length;
+  g('sbCams').textContent=devices.reduce((a,d)=>a+d.channels,0);
+}
+
+async function render(){
+  stopAll(); camSt={};
+  const main=g('main'); main.innerHTML='';
+  devices.forEach(dev=>main.appendChild(buildGroup(dev)));
+  startAll();
+}
+
+function buildGroup(dev){
+  const w=document.createElement('div'); w.className='dg'; w.id=`dg-${dev.id}`;
+  w.innerHTML=`
+    <div class="dg-hdr">
+      <span class="dbadge ${dev.brand}">${dev.brand==='hikvision'?'HIK-CONNECT':'EASY4IP'} P2P</span>
+      <div><div class="dn">${dev.label}</div><div class="dsn">${dev.channels} ch | ${dev.mode}</div></div>
+      <div class="dconn">
+        <div class="pdot p-ld" id="dd-${dev.id}"></div>
+        <span id="ds-${dev.id}" style="font-family:var(--mono);font-size:9px">รอ...</span>
+        <button class="dpbtn" onclick="pingDev('${dev.id}')">⚡</button>
+      </div>
+    </div>
+    <div class="cam-grid g${cols}" id="grid-${dev.id}"></div>`;
+  const grid=w.querySelector(`#grid-${dev.id}`);
+  for(let ch=1;ch<=dev.channels;ch++){
+    const key=`${dev.id}_${ch}`;
+    const label=(LABELS[dev.id]||{})[ch]||`CH${ch}`;
+    camSt[key]={ok:false,ts:null,retries:0};
+    grid.appendChild(buildCard(dev,ch,key,label));
+  }
+  return w;
+}
+
+function buildCard(dev,ch,key,label){
+  const c=document.createElement('div');
+  c.className='cc'; c.id=`cc-${key}`;
+  c.onclick=()=>openFull(dev,ch,key,label);
+  const pts=label.split(' ');
+  c.innerHTML=`
+    <div class="ciw">
+      <div class="clive"><div class="cld"></div>LIVE</div>
+      <span class="cptag ${dev.brand==='hikvision'?'hik':'dah'}">${dev.brand==='hikvision'?'HIK':'DAH'}</span>
+      <div class="cspin" id="sp-${key}"><div class="sr"></div></div>
+      <img class="cimg" id="img-${key}" alt="${label}">
+      <div class="cel"><div class="cei">📡</div><div class="cet" id="et-${key}">เชื่อมต่อไม่ได้</div><div class="cer" id="er-${key}">retry…</div></div>
+      <div class="cprg" id="prg-${key}" style="width:0%"></div>
+    </div>
+    <div class="cinfo">
+      <div><div class="cid">${ch.toString().padStart(2,'0')} ${pts[0]}</div><div class="cnm">${pts.slice(1).join(' ')}</div></div>
+      <div class="cmeta"><span class="cts" id="ts-${key}">--:--</span><span id="ico-${key}" style="font-size:11px">⏳</span></div>
+    </div>`;
+  return c;
+}
+
+async function loadFrame(devId,ch,key){
+  const sp=g(`sp-${key}`),prg=g(`prg-${key}`);
+  if(sp) sp.style.display='flex';
+  if(prg){prg.style.transition='none';prg.style.width='0%';requestAnimationFrame(()=>{prg.style.transition=`width ${interval}s linear`;prg.style.width='100%'});}
+  try{
+    const r=await fetch(`${APPS_SCRIPT_URL}?action=snapshot&device=${devId}&ch=${ch}&_=${Date.now()}`);
+    if(!r.ok) throw new Error(`HTTP ${r.status}`);
+    const d=await r.json();
+    if(!d.ok||!d.data) throw new Error(d.error||'no data');
+    const bytes=atob(d.data),buf=new Uint8Array(bytes.length);
+    for(let i=0;i<bytes.length;i++) buf[i]=bytes.charCodeAt(i);
+    const url=URL.createObjectURL(new Blob([buf],{type:'image/jpeg'}));
+    const img=g(`img-${key}`);
+    if(img){if(img._u) URL.revokeObjectURL(img._u); img._u=url; img.src=url;}
+    onOk(key);
+  }catch(e){ onErr(key,e.message); }
+}
+
+function onOk(key){
+  camSt[key]={ok:true,ts:new Date(),retries:0};
+  const cc=g(`cc-${key}`);
+  if(g(`sp-${key}`)) g(`sp-${key}`).style.display='none';
+  if(cc) cc.className='cc ok';
+  g(`ts-${key}`).textContent=fmt(camSt[key].ts);
+  g(`ico-${key}`).textContent='🟢';
+  updateStats(); updateDevSt(); log(`✓ ${key}`);
+}
+
+function onErr(key,msg){
+  camSt[key].ok=false; camSt[key].retries=(camSt[key].retries||0)+1;
+  if(g(`sp-${key}`)) g(`sp-${key}`).style.display='none';
+  const cc=g(`cc-${key}`); if(cc) cc.className='cc err';
+  g(`ico-${key}`).textContent='🔴';
+  if(g(`er-${key}`)) g(`er-${key}`).textContent=`retry #${camSt[key].retries}`;
+  if(g(`et-${key}`)) g(`et-${key}`).textContent=(msg||'').slice(0,35);
+  updateStats(); updateDevSt();
+}
+
+function startAll(){
+  devices.forEach(dev=>{
+    for(let ch=1;ch<=dev.channels;ch++){
+      const key=`${dev.id}_${ch}`;
+      const delay=((ch-1)*500)+(devices.indexOf(dev)*3000);
+      setTimeout(()=>{
+        loadFrame(dev.id,ch,key);
+        if(timers[key]) clearInterval(timers[key]);
+        timers[key]=setInterval(()=>{if(!paused) loadFrame(dev.id,ch,key);},interval*1000);
+      },delay);
+    }
+  });
+}
+
+function stopAll(){ Object.values(timers).forEach(t=>clearInterval(t)); timers={}; }
+
+function updateStats(){
+  const vals=Object.values(camSt);
+  g('cOn').textContent=vals.filter(s=>s.ok).length;
+  g('cErr').textContent=vals.filter(s=>!s.ok&&s.retries>0).length;
+}
+
+function updateDevSt(){
+  devices.forEach(dev=>{
+    const keys=Array.from({length:dev.channels},(_,i)=>`${dev.id}_${i+1}`);
+    const on=keys.filter(k=>camSt[k]?.ok).length,tot=keys.length;
+    const dot=g(`dd-${dev.id}`),lbl=g(`ds-${dev.id}`);
+    if(!dot) return;
+    if(on===tot){dot.className='pdot p-ok';lbl.textContent=`Online ${on}/${tot}`;}
+    else if(on===0){dot.className='pdot p-err';lbl.textContent=`Offline 0/${tot}`;}
+    else{dot.className='pdot p-ld';lbl.textContent=`Partial ${on}/${tot}`;}
+  });
+}
+
+async function pingDev(id){
+  const dot=g(`dd-${id}`),lbl=g(`ds-${id}`);
+  if(dot) dot.className='pdot p-ld'; if(lbl) lbl.textContent='Pinging...';
+  try{
+    const r=await fetch(`${APPS_SCRIPT_URL}?action=ping&device=${id}`);
+    const d=await r.json();
+    if(d.ok){if(dot) dot.className='pdot p-ok'; if(lbl) lbl.textContent=`Online ${d.latency}ms`; log(`✓ ${id} ${d.latency}ms`);}
+    else{if(dot) dot.className='pdot p-err'; if(lbl) lbl.textContent=`Offline`; log(`✗ ${id}`);}
+  }catch(e){if(dot) dot.className='pdot p-err'; if(lbl) lbl.textContent='Error';}
+}
+
+function refreshAll(){ devices.forEach(dev=>{for(let ch=1;ch<=dev.channels;ch++) loadFrame(dev.id,ch,`${dev.id}_${ch}`);}); log('↺ Refresh all'); }
+function togglePause(){ paused=!paused; const b=g('pauseBtn'); b.textContent=paused?'▶ Resume':'⏸ Pause'; b.classList.toggle('active',paused); }
+function setGrid(n){ cols=n; document.querySelectorAll('.gbtn').forEach(b=>b.classList.toggle('active',+b.dataset.g===n)); document.querySelectorAll('.cam-grid').forEach(gr=>gr.className=`cam-grid g${n}`); }
+function setIv(v){ interval=+v; g('ivv').textContent=v+'s'; g('sbi').textContent=v+'s'; stopAll(); startAll(); }
+function openFull(dev,ch,key,label){ const img=g(`img-${key}`); g('mimg').src=img?img.src:''; g('mtitle').textContent=`CH${ch.toString().padStart(2,'0')} — ${label}`; g('mmeta').textContent=`${dev.brand} | ${dev.id}`; g('mts').textContent=fmt(new Date()); g('mov').classList.add('open'); }
+function closeFull(){ g('mov').classList.remove('open'); }
+function g(id){ return document.getElementById(id); }
+function fmt(d){ return d?d.toTimeString().slice(0,8):'--:--:--'; }
+function log(m){ const e=g('sblog'); if(e) e.textContent=m; }
+
+setInterval(()=>{ g('clock').textContent=fmt(new Date()); },1000);
+
+(async function(){
+  log('● กำลังเชื่อมต่อ...');
+  const ok=await checkServer();
+  if(ok){ await loadDevices(); render(); }
+  else{ await loadDevices(); render(); }
+  setInterval(checkServer,60000);
+})();
+</script>
+</body>
+</html>
